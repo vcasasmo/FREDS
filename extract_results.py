@@ -9,7 +9,7 @@ def read_results(n_groups, select="best", switch = False):
                 grids we wish to extract
     :param select: A string. When set to "best", the function 
             retrieve the best discretisations in the file. When set to
-            "reccurent", the function retrieve the most reccurent
+            "recurrent", the function retrieve the most recurrent
             discretisations in the file.
     :param switch: A boolean. If set to True, the function retrieves 
                 the energy discretisations found with the optimisation
@@ -30,8 +30,8 @@ def read_results(n_groups, select="best", switch = False):
     # color for the graphs
     methods = [
         ("GPT", fitness_functions.compare_vectors_gpt, "m"),
-        ("XGPT", fitness_functions.compare_vectors_gpt_xgpt,"darkgreen" ),
-        ("uncertainty", fitness_functions.compare_variance_gpt_xgpt, "red")
+        ("XGPT", fitness_functions.compare_vectors_gpt_xgpt,"darkgreen" )
+
     ]
     
     # Iteration on each specified group

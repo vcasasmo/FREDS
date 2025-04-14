@@ -1,27 +1,26 @@
 
+#@Emilie Hi Emilie, let me take you on a tour.
+# btw, plot_results, irace_parametrisation and extract_results remain as they are.
 
 
-
-
+import time
 import numpy as np
 import pandas as pd
-from genetic_algorithm import GeneticAlgorithm
 import matplotlib.pyplot as plt
- 
+
+
 from pymoo.core.problem import Problem
-
 from pymoo.optimize import minimize
-
 from pymoo.algorithms.moo.nsga2 import NSGA2
 from pymoo.operators.sampling.rnd import IntegerRandomSampling
 from pymoo.operators.crossover.sbx import SBX
 from pymoo.operators.mutation.pm import PM
 from pymoo.operators.repair.rounding import RoundingRepair
 from pymoo.visualization.scatter import Scatter
-import time 
 from pymoo.indicators.hv import HV
-
-ref_point = np.array([1,1])
+from extract_input_data import extract_data
+from fitness_functions import FitnessFunctions
+ref_point = np.array([1,1,1])
 
 hv_indicator = HV(ref_point=ref_point)
 
@@ -49,6 +48,65 @@ class PerformanceMetrics:
 
 # Initialize metrics recorder
 metrics = PerformanceMetrics()
+#@Emilie We are expecting to deal always with something similar to what's on SYNTH_CASE:
+SYNTH_CASE = {'observable': 'keff', 'metric': 'cosine_similarity', 'criteria': 'GPT', 'obj1': ('U235','f','c','s'), 'obj2': ('U238','c','s'), 'obj3': 'GROUPS'}
+
+def condition_case(case_dict):
+    fitness_instances = []
+    moo = False
+
+    for objective in ['obj1', 'obj2', 'obj3']:
+        if case_dict[objective] is None:
+            break
+        elif case_dict[objective] == 'GROUPS':
+            moo = True
+        else:
+            isotope = case_dict[objective][0] #@Emilie we sort the sensitivities with this variable
+            reactions = case_dict[objective][1:] #@Emilie although no implemented yet, this will reshape the energy grid according to different reactions
+            gpt_vector, gpt_vector_per_unit_lethargy, xgpt_energy_grid, gpt_energy_grid = extract_data(isotope, reactions)
+            # @Emilie, on line 65 I had to pull a dependency inversion, so I have to call extract_data from extract_input_data... I had to butcher your code a little bit :(.
+            # @Emilie, As I see it we could re-utilize part of extract_input_data for a future Class "Sensitivity" in a way that directly yields  gpt_vector, gpt_vector_per_unit_lethargy, xgpt_energy_grid, gpt_energy_grid
+            print(isotope)
+            # Instance class
+            fitness_instance = FitnessFunctions(
+                gpt_vector,
+                gpt_vector_per_unit_lethargy,
+                xgpt_energy_grid,
+                gpt_energy_grid,
+                None,  #Eigenbasis  #@Emilie I trimmed anything not used, so I emptied many variables not used in this implementation
+                None,  #perts
+            )
+
+            fitness_instances.append(fitness_instance)
+
+
+    def get_fitness_function(instance):
+        if case_dict['criteria'] == 'GPT':
+            return instance.compare_vectors_gpt
+        elif case_dict['criteria'] == 'XGPT':
+            return instance.compare_vectors_gpt_xgpt
+        else:
+            raise Exception("Criteria not implemented")
+
+    # @Emilie, to avoid leakages and in the future, race conditions, I opted for turning the fitness_function into a class, so we can generate many, non-related instances of
+    # all the functions you devised in fitnes_functions /fitness_utils
+    fitness_functions = [get_fitness_function(inst) for inst in fitness_instances]
+
+    return fitness_functions, moo
+
+
+
+
+
+
+fitness_functions,_ = condition_case(SYNTH_CASE)
+
+
+
+
+
+
+
 
 
 class GridDesignMOO(Problem):
@@ -56,27 +114,32 @@ class GridDesignMOO(Problem):
     def __init__(self):
         super().__init__(
             n_var=n_var,  # Number of decision variables
-            n_obj=2,  # Two objectives: fitness and number of active variables
+            n_obj=3,  # Two objectives: fitness and number of active variables
             n_constr=0,  # No constraints
             xl=1,  # Lower bound of variables
             xu=224,  # Upper bound of variables
             var_type=int  # Integer variables
         )
         # Initialize your genetic algorithm
-        self.genetic_algo = GeneticAlgorithm(32, criteria='GPT')
+
+
+
 
     def _evaluate(self, x, out, *args, **kwargs):
         x = x.astype(np.int32)  # Ensure variables are integers
-        fitness = np.zeros(x.shape[0])
+        fitness0 = np.zeros(x.shape[0])
+        fitness1 = np.zeros(x.shape[0])
         num_active_variables = np.zeros(x.shape[0])
-
         for individual in range(x.shape[0]):
             # Calculate fitness for the first objective
-            fitness[individual] = self.genetic_algo.transfer_fitness(sorted(np.unique(x[individual])))
-            # Calculate the number of active variables for the second objective
-            num_active_variables[individual] = len(np.unique(x[individual]))/32
+            fitness0[individual] = fitness_functions[0](sorted(np.unique(x[individual])))
+            fitness1[individual] = fitness_functions[1](sorted(np.unique(x[individual])))
+            #print(fitness0[individual],fitness1[individual])
 
-        out["F"] = np.column_stack([fitness, num_active_variables])  # Both objectives
+            # Calculate the number of active variables for the second objective
+            num_active_variables[individual] = len(np.unique(x[individual]))/n_var
+
+        out["F"] = np.column_stack([fitness0, fitness1, num_active_variables])  # Both objectives
 
 problem = GridDesignMOO()
 
@@ -164,10 +227,12 @@ df_F = pd.DataFrame(res.F, columns=["Fitness", "N_Groups"])
 df["Fitness"] = df_F["Fitness"]
 df["N_Groups"] = df_F["N_Groups"]*n_var
 # Save the DataFrame to a CSV file
-df.to_csv("./Results/{}_{}G_results.csv".format('GPT', n_var+1), index=False)
+df.to_csv("./Results/{}_{}G_results_simplified2.csv".format('GPT', n_var+1), index=False)
 
 import sys
 sys.path.append(r"\Energy_Grid_Design")
+#@Emilie plot_results does not work yet as is still pointing to and needing variables that don't exist anymore on extract input data .py
+#@Emilie now we can check extract_input_data.py :)
 import plot_results as p
 for row in range(res.X.shape[0]):  
 
