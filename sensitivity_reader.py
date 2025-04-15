@@ -133,7 +133,10 @@ class Sensitivity:
         sensitivities_evaluated[-1] /= np.sum(energies) 
         return sensitivities_evaluated
     
-    def plot(self):
+    def plot(self, grid):
+        
+        self.set_ga_grid(grid)
+
         nPerts = len(self.perts)
         fig, axs = plt.subplots(1, nPerts, figsize=(4*nPerts, 4), sharex=True, sharey="row")
         plt.xscale("log")
