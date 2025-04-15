@@ -4,7 +4,7 @@ This code was jointly developed from researchers of Belgian Nuclear Centre (SCK 
 
 ## Pre-requisites
 
-This code was developped using Python version 12.3.0, as well as the following libraries and their versions:
+This code was developped using Python version 3.12.0, as well as the following libraries and their versions:
 - numpy version 1.26.4
 - serpentTools version 0.10.1
 - pandas version 1.3.2
