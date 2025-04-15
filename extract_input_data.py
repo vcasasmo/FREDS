@@ -98,41 +98,4 @@ def extract_data(isotope,reactions):
     return (gpt_vector, gpt_vector_per_unit_lethargy, xgpt_energy_grid, gpt_energy_grid)
 
 
-def extract_myrrha_sensitivities(isotope):
-    gpt_reader = serpentTools.read(os.path.join(os.getcwd(), "sneak_4A_sens0.m"))
-    zai = 942390 if isotope == 'Pu239' else 922380 if isotope == 'U238' else 92235
-    print(zai)
-    zai_index = gpt_reader.zais[zai]
 
-    fission_index = gpt_reader.perts["capture xs"] # "it was capture xs before,Fission xs perturbation  #VCasas changed because of Serpent2, sometimes comes swap.
-    el_scatter_index = gpt_reader.perts["total xs"] # Elastic scattering xs perturbation
-    rad_capt_index = gpt_reader.perts["fission xs"] # Radiative capture xs perturbation
-
-    fission_sensitivities = gpt_reader.sensitivities["keff"][0][zai_index][fission_index]
-    el_scatter_sensitivities = gpt_reader.sensitivities["keff"][0][zai_index][el_scatter_index]
-    rad_capt_sensitivities = gpt_reader.sensitivities["keff"][0][zai_index][rad_capt_index]
-
-    gpt_vector = {"MT2": np.zeros((226,)), "MT18": np.zeros((226,)), "MT102": np.zeros((226,))}
-    gpt_vector_lethargy_normalised = {"MT2": np.zeros((226,)), "MT18": np.zeros((226,)), "MT102": np.zeros((226,))}
-
-    for sensitivities, label in [(fission_sensitivities, "MT18"),
-                                (el_scatter_sensitivities, "MT2"),
-                                (rad_capt_sensitivities, "MT102")]:
-        i = 0
-        for sensitivity, error in sensitivities:
-            gpt_vector[label][i] = sensitivity
-            gpt_vector_lethargy_normalised[label][i] = sensitivity
-            i += 1
-
-
-        gpt_vector_lethargy_normalised[label] /= gpt_reader.lethargyWidths
-
-    return gpt_vector, gpt_vector_lethargy_normalised
-
-ECCO33 = sorted([1.9640330000E+01,1.0000000000E+01, 6.0653070000E+00, 3.6787940000E+00,
-           2.2313020000E+00, 1.3533530000E+00, 8.2085000000E-01, 4.9787070000E-01, 3.0197380000E-01,
-           1.8315640000E-01, 1.1109000000E-01, 6.7379470000E-02, 4.0867710000E-02, 2.4787520000E-02,
-           1.5034390000E-02, 9.1188200000E-03, 5.5308440000E-03, 3.3546260000E-03, 2.0346840000E-03, 
-           1.2340980000E-03, 7.4851830000E-04, 4.5399930000E-04, 3.0432480000E-04, 1.4862540000E-04,
-           9.1660880000E-05, 6.7904050000E-05, 4.0169000000E-05, 2.2603290000E-05, 1.3709590000E-05,
-           8.3152870000E-06, 4.0000000000E-06, 5.4000000000E-07, 1.0000000000E-07, 1.0000100000E-11])

@@ -50,7 +50,11 @@ class PerformanceMetrics:
 metrics = PerformanceMetrics()
 #@Emilie We are expecting to deal always with something similar to what's on SYNTH_CASE:
 SYNTH_CASE = {'observable': 'keff', 'metric': 'cosine_similarity', 'criteria': 'GPT', 'obj1': ('U235','f','c','s'), 'obj2': ('U238','c','s'), 'obj3': 'GROUPS'}
-
+#@Emilie, Synth_Case is what I understood should be pass for an optimization problem, a "sensitivity" object could be described by:
+#  observable, metric,criteria,isotope and number of reactions to take into account? , so with a unit of this, we could fill an objective for the GA
+# additionally, some parameters that are problem-related not sensitivity related are required:
+# - name of file/project for input/output id, number of maximum groups to optimize for, maximum and minimum discretization of the values,
+#additionally, you can give a default value, but you could create a structure for the parameters of the GA in case the user wants to test their luck.
 def condition_case(case_dict):
     fitness_instances = []
     moo = False
@@ -89,7 +93,7 @@ def condition_case(case_dict):
             raise Exception("Criteria not implemented")
 
     # @Emilie, to avoid leakages and in the future, race conditions, I opted for turning the fitness_function into a class, so we can generate many, non-related instances of
-    # all the functions you devised in fitnes_functions /fitness_utils
+    # all the functions you devised in fitness_functions /fitness_utils
     fitness_functions = [get_fitness_function(inst) for inst in fitness_instances]
 
     return fitness_functions, moo
