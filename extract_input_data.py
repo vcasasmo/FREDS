@@ -176,6 +176,7 @@ def extract_covariance_matrix(single = False, name = None):
         cov_matrix = new_cov_matrix
 
     return cov_matrix
+
 ## VCasas use this one
 def extract_data():
     """

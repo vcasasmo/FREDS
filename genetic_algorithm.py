@@ -1,6 +1,6 @@
 import numpy as np
 import random
-from fitness_functions import compare_vectors_gpt, compare_variance_gpt_xgpt, compare_vectors_gpt_xgpt
+from fitnessFunctions import CosineSimilarityGPT, CosineSimilarityXGPT
 
 ALLELE_POOL = range(1, 226)
 
@@ -25,7 +25,7 @@ class GeneticAlgorithm():
               Else, the fitness is computed and then stored in FITNESS_LIBRARY
             """
             if tuple(self.get_chromosome()) not in FITNESS_LIBRARY:
-                fitness = FITNESS_FUNCTION(self.get_chromosome())
+                fitness = FITNESS_FUNCTION._get_fitness(self.get_chromosome())
 
                 FITNESS_LIBRARY[tuple(self.get_chromosome())] = fitness
 
@@ -37,14 +37,14 @@ class GeneticAlgorithm():
             """
             return sorted(self.chromosome)
         
-    def __init__(self, nGroups, criteria, pop_size = 500,
+    def __init__(self, nGroups, sensitivity, criteria, pop_size = 500,
                   pm = 0.035, pc = 1, no_tournament = False,
                   elitism = 0.027, adaptive = True, soft_mutation = 1, 
                   p = 0.55, NT = 1, multi_parent = 6):
         
         global FITNESS_FUNCTION
         
-        FITNESS_FUNCTION = compare_vectors_gpt if criteria == "GPT" else compare_vectors_gpt_xgpt if criteria == "XGPT" else compare_variance_gpt_xgpt
+        FITNESS_FUNCTION = CosineSimilarityGPT(sensitivity) if criteria == "GPT" else CosineSimilarityXGPT()
         
         # Classical Genetic algorithm parametrisation
         self.nGroups = nGroups - 1
@@ -111,9 +111,11 @@ class GeneticAlgorithm():
                                 self.allele_pool if allele
                                   not in exclude])
         return allele
-    def transfer_fitness (self,chromosome):
+    
+    def transfer_fitness (self, chromosome):
         fitness = self.Individual(chromosome).fitness
         return fitness
+    
     def mutation(self, chromosome):
         """
         :param chromosome: A list of integers
