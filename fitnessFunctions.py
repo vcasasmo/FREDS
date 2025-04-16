@@ -38,7 +38,7 @@ class CosineSimilarityGPT(ObjectiveFunction):
         evaluated_gpt = np.concatenate(evaluated_gpt)
         return reference_gpt, evaluated_gpt
     
-    def _get_fitness(self, ga_grid):
+    def get_fitness(self, ga_grid):
         self.sensitivity.set_ga_grid(ga_grid)
         self.sensitivity.downbin()
         self.sensitivity.upbin()
@@ -53,15 +53,12 @@ class CosineSimilarityXGPT(ObjectiveFunction):
         super().__init__(sensitivity)
 
     def get_fitness(self, ga_grid):
-        return super().get_fitness(ga_grid)
-    
-    def project_gpt_onto_eigenbasis(self):
-        """
-        :param ga_grid: The chromosome encoding the test discretisation
-        :return: A numpy vector containing the XGPT-scored sensitivity 
-            coefficients evaluated on ga_grid
-        """
+        self.sensitivity.set_ga_grid(ga_grid)
         self.sensitivity.downbin()
         self.sensitivity.upbin()
-        projected_gpt = self.sensitivity.projection()
-        return projected_gpt
+        self.sensitivity.projection()
+
+        evaluated_xgpt = self.sensitivity.get_evaluated_sensitivity()
+        reference_xgpt = self.sensitivity.get_reference_sensitivity()
+
+        return 1 - self.cosine_similarity(evaluated_xgpt, reference_xgpt)

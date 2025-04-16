@@ -1,35 +1,35 @@
-import numpy as np
 import random
+import numpy as np
 from fitnessFunctions import CosineSimilarityGPT, CosineSimilarityXGPT
+from sensitivity_reader import GPTSensitivity, XGPTSensitivity
 
-ALLELE_POOL = range(1, 226)
+allele_pool = range(1, 226)
+fitness_library = dict()
+fitness_function = None
 
-FITNESS_LIBRARY = dict()
-FITNESS_FUNCTION = None
 
 class GeneticAlgorithm():
 
     class Individual():
-
         def __init__(self, chromosome):
             """
             :param chromosome: A list of integers, representing the real coded chromosome, with integers as its allele values.
             """
             self.chromosome = sorted(chromosome)
-            self.fitness = self.get_fitness()
+            self.fitness = self._get_fitness()
             
-        def get_fitness(self):
+        def _get_fitness(self):
             """
             :return: A numerical value being the fitness of the individual.
-              If the fitness has already been computed, it is retrieved from FITNESS_LIBRARY. 
-              Else, the fitness is computed and then stored in FITNESS_LIBRARY
+              If the fitness has already been computed, it is retrieved from fitness_library. 
+              Else, the fitness is computed and then stored in fitness_library
             """
-            if tuple(self.get_chromosome()) not in FITNESS_LIBRARY:
-                fitness = FITNESS_FUNCTION._get_fitness(self.get_chromosome())
+            if tuple(self.get_chromosome()) not in fitness_library:
+                fitness = fitness_function.get_fitness(self.get_chromosome())
 
-                FITNESS_LIBRARY[tuple(self.get_chromosome())] = fitness
+                fitness_library[tuple(self.get_chromosome())] = fitness
 
-            return FITNESS_LIBRARY[tuple(self.get_chromosome())]
+            return fitness_library[tuple(self.get_chromosome())]
         
         def get_chromosome(self):
             """
@@ -37,19 +37,20 @@ class GeneticAlgorithm():
             """
             return sorted(self.chromosome)
         
-    def __init__(self, nGroups, sensitivity, criteria, pop_size = 500,
+    def __init__(self, nGroups, sensitivity, pop_size = 500,
                   pm = 0.035, pc = 1, no_tournament = False,
                   elitism = 0.027, adaptive = True, soft_mutation = 1, 
                   p = 0.55, NT = 1, multi_parent = 6):
         
-        global FITNESS_FUNCTION
-        
-        FITNESS_FUNCTION = CosineSimilarityGPT(sensitivity) if criteria == "GPT" else CosineSimilarityXGPT()
+        global fitness_function
+        fitness_function = CosineSimilarityGPT(sensitivity) if isinstance(sensitivity, GPTSensitivity) else CosineSimilarityXGPT(sensitivity) if isinstance(sensitivity, XGPTSensitivity) else None
+        if fitness_function is None:
+            raise ValueError("Invalid sensitivity vector")
         
         # Classical Genetic algorithm parametrisation
         self.nGroups = nGroups - 1
         self.pop_size = pop_size
-        self.allele_pool = ALLELE_POOL
+        self.allele_pool = allele_pool
         self.pm = pm
         self.mutation_rate = self.pm
         self.pc = pc
@@ -87,7 +88,7 @@ class GeneticAlgorithm():
         """
         registered = []
         for i in range(len(chromosome)):
-            if chromosome[i] not in ALLELE_POOL:
+            if chromosome[i] not in allele_pool:
                 chromosome[i] = self.mutated_allele(exclude = 
                                                     chromosome)
             elif chromosome[i] not in registered:
@@ -267,9 +268,9 @@ class GeneticAlgorithm():
         """
 
         # Emptying the fitness library from previous runs
-        global FITNESS_LIBRARY
+        global fitness_library
 
-        FITNESS_LIBRARY = dict()
+        fitness_library = dict()
 
         random.seed(seed)
         population = []
