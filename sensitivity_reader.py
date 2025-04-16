@@ -13,6 +13,7 @@ class Sensitivity:
         self.nEnergyGroups = len(self.energy_grid) - 1
         self.perts = self.extract_perts(perts)
         self.zai_index = self.reader.zais[zai]
+        self.zai = zai
         self.reference_sensitivities = self.extract_sensitivity_coefficients()
         self.sensitivities = self.reference_sensitivities
         self.ga_grid = None
