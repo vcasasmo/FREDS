@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-from fitnessFunctions import CosineSimilarityGPT, CosineSimilarityXGPT
+from fitness_functions import CosineSimilarityGPT, CosineSimilarityXGPT
 import matplotlib.pyplot as plt
 from pymoo.core.problem import Problem
 from pymoo.optimize import minimize
@@ -14,7 +14,7 @@ import time
 from pymoo.indicators.hv import HV
 import shutil
 
-from sensitivity_reader import GPTSensitivity
+from sensitivity import GPTSensitivity
 import os
 import pandas as pd
 

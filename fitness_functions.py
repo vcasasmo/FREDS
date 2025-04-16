@@ -1,71 +1,64 @@
 import numpy as np
-from extract_input_data import gpt_energy_grid, gpt_vector, gpt_vector_lethargy_normalised
-from fitness_utils import cosine_similarity, down_binning, up_binning, energy_from_energy_grid, project_gpt_onto_eigenbasis
+from sensitivity import GPTSensitivity, XGPTSensitivity
 
-def compare_vectors_gpt_xgpt(ga_grid):
-    """
+class ObjectiveFunction:
+    def __init__(self, sensitivity):
+        self.sensitivity = sensitivity
 
-    :param ga_grid: Chromosome encoded discretisation 
-                    that we aim to measure the fitness
-    Compare through a cosine similarity the evaluated and
-    fine XGPT-scored sensitivity coefficients
-    """
+    def cosine_similarity(self, A, B):
+        dot_product = np.dot(A, B)
+        norm_A = np.linalg.norm(A)
+        norm_B = np.linalg.norm(B)
+        similarity = dot_product / (norm_A * norm_B)
+        return similarity
+
+    def get_fitness(self, ga_grid):
+        raise NotImplementedError
+
+class CosineSimilarityGPT(ObjectiveFunction):
     
-    # Evaluate the XGPT-scored sensitivity on ga_grid
-
-    evaluated_xgpt = project_gpt_onto_eigenbasis(ga_grid)
-
-    # The fitness function is defined as 1 - cosine(A, B)
-    #  since the GA minimises the fitnesses
-
-    return  1-cosine_similarity(evaluated_xgpt , xgpt_vector)
-
-
-def compare_variance_gpt_xgpt(ga_grid):
-    """
-    :param ga_grid: Chromosome encoded discretisation 
-                    that we aim to measure the fitness
-    Compare the variance on keff, carried by the evaluated and
-    fine XGPT-scored sensitivity coefficients
-    """
-    # Evaluate the XGPT-scored sensitivity on ga_grid
-
-    evaluated_xgpt = project_gpt_onto_eigenbasis(ga_grid)
-
-    # Compute the variance throught the modified sandwich rule
-    variance_evaluated_xgpt = evaluated_xgpt @ singular_matrix @ evaluated_xgpt.T
-    variance_fine_xgpt = xgpt_vector @ singular_matrix @ xgpt_vector.T
-
-    # The fitness is defined as the absolute difference of the 
-    # variance computed with the fine and evaluated vectors
-    return  abs(variance_fine_xgpt - variance_evaluated_xgpt)
-
-def compare_vectors_gpt(ga_grid):
-    """
-    :param ga_grid: Chromosome encoded discretisation 
-                    that we aim to measure the fitness
-    Compare through a cosine similarity the evaluated and
-    fine GPT-scored sensitivity coefficients
-    """
-
-    # Evaluated the fine GPT-scored sensitivity vector on ga_grid
-    gpt_ga = down_binning(gpt_vector_lethargy_normalised, ga_grid, gpt_energy_grid)
-   
-    # Retrieve the energy discretisation defined by ga_grid
-
-    ga_energy_grid = energy_from_energy_grid(gpt_energy_grid, ga_grid)
+    def __init__(self, sensitivity):
+        if not isinstance(sensitivity, GPTSensitivity):
+             raise ValueError("sensitivity must be of type GPTSensitivity")
+        super().__init__(sensitivity)
     
-    # Upbinning the evaluated GPT-scored vector to the 226G energy grid
-    extended_gpt_ga = up_binning(gpt_energy_grid, ga_energy_grid, gpt_ga)
+    def process_vectors(self):
+        evaluated_gpt = []
+        reference_gpt = []
 
-    evaluated_gpt = []
-    fine_gpt = []
-    # Concatenating the vectors for each perturbation
-    for label, evaluated_values in extended_gpt_ga.items():
-        fine_values = gpt_vector[label]
-        fine_gpt.append(fine_values)
-        evaluated_gpt.append(evaluated_values)
+        coarse_vector = self.sensitivity.get_evaluated_sensitivity()
+        reference_vector = self.sensitivity.get_reference_sensitivity()
 
-    # The fitness function is defined as 1 - cosine(A, B)
-    #  since the GA minimises the fitnesses
-    return 1 - cosine_similarity(np.concatenate(fine_gpt), np.concatenate(evaluated_gpt))
+        for label, evaluated_values in coarse_vector.items():
+            fine_values = reference_vector[label]
+            reference_gpt.append(fine_values)
+            evaluated_gpt.append(evaluated_values)
+
+        reference_gpt = np.concatenate(reference_gpt)
+        evaluated_gpt = np.concatenate(evaluated_gpt)
+        return reference_gpt, evaluated_gpt
+    
+    def get_fitness(self, ga_grid):
+        self.sensitivity.set_ga_grid(ga_grid)
+        self.sensitivity.downbin()
+        self.sensitivity.upbin()
+        reference_gpt, evaluated_gpt = self.process_vectors()
+        return 1 - self.cosine_similarity(reference_gpt, evaluated_gpt)
+
+
+class CosineSimilarityXGPT(ObjectiveFunction):
+    def __init__(self, sensitivity):
+        if not isinstance(sensitivity, XGPTSensitivity):
+             raise ValueError("sensitivity must be of type XGPTSensitivity")
+        super().__init__(sensitivity)
+
+    def get_fitness(self, ga_grid):
+        self.sensitivity.set_ga_grid(ga_grid)
+        self.sensitivity.downbin()
+        self.sensitivity.upbin()
+        self.sensitivity.projection()
+
+        evaluated_xgpt = self.sensitivity.get_evaluated_sensitivity()
+        reference_xgpt = self.sensitivity.get_reference_sensitivity()
+
+        return 1 - self.cosine_similarity(evaluated_xgpt, reference_xgpt)

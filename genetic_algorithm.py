@@ -1,9 +1,8 @@
 import random
 import numpy as np
-from fitnessFunctions import CosineSimilarityGPT, CosineSimilarityXGPT
-from sensitivity_reader import GPTSensitivity, XGPTSensitivity
+from fitness_functions import CosineSimilarityGPT, CosineSimilarityXGPT
+from sensitivity import GPTSensitivity, XGPTSensitivity
 
-allele_pool = range(1, 226)
 fitness_library = dict()
 fitness_function = None
 
@@ -45,12 +44,12 @@ class GeneticAlgorithm():
         global fitness_function
         fitness_function = CosineSimilarityGPT(sensitivity) if isinstance(sensitivity, GPTSensitivity) else CosineSimilarityXGPT(sensitivity) if isinstance(sensitivity, XGPTSensitivity) else None
         if fitness_function is None:
-            raise ValueError("Invalid sensitivity vector")
+            raise ValueError("Invalid type of sensitivity vector")
         
         # Classical Genetic algorithm parametrisation
         self.nGroups = nGroups - 1
         self.pop_size = pop_size
-        self.allele_pool = allele_pool
+        self.allele_pool = np.arange(1, len(sensitivity.energy_grid) - 1)
         self.pm = pm
         self.mutation_rate = self.pm
         self.pc = pc
@@ -88,7 +87,7 @@ class GeneticAlgorithm():
         """
         registered = []
         for i in range(len(chromosome)):
-            if chromosome[i] not in allele_pool:
+            if chromosome[i] not in self.allele_pool:
                 chromosome[i] = self.mutated_allele(exclude = 
                                                     chromosome)
             elif chromosome[i] not in registered:

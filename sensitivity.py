@@ -5,6 +5,10 @@ import glob
 import os
 import matplotlib.pyplot as plt
 
+zai_to_nuclide = {
+    922380 : "U",
+    942390 : "Pu"
+}
 
 class Sensitivity:
     def __init__(self, filepath, zai, notation_dict, perts = list(), observable = "keff"):
@@ -72,7 +76,7 @@ class Sensitivity:
         coarse_energy[-1] = self.energy_grid[-1]
         return coarse_energy
     
-    def evaluate_on_ga(self, sensitivity, plot = False):
+    def evaluate_on_ga(self, sensitivity):
 
         nSens = len(sensitivity)
         nGASens = len(self.ga_grid)
@@ -175,11 +179,8 @@ class GPTSensitivity(Sensitivity):
             self.upbin()
             evaluated_sensitivity = np.concatenate((np.zeros(1),self.get_evaluated_sensitivity()[perturbation]))
 
-            # prefix = "G" if label == "GPT" else "X" if label == "XGPT" else "V"
-            # nuclide = "Pu9" if ISOTOPE == "Pu239" else "U8"
-
             # naming to fix !
-            naming = f"GU-33"
+            naming = f"G{zai_to_nuclide[self.zai]}-{len(self.ga_grid) + 1}"
             ax.step(self.energy_grid, evaluated_sensitivity, where="post", label=f"{naming} evaluated on {perturbation}", alpha=0.8)
 
        
@@ -337,7 +338,7 @@ class XGPTSensitivity(Sensitivity):
             # nuclide = "Pu9" if ISOTOPE == "Pu239" else "U8"
 
             # naming to fix !
-            naming = f"XU-33"
+            naming = f"X{zai_to_nuclide[self.zai]}-{len(self.ga_grid) + 1}"
             ax.step(self.energy_grid, evaluated_sensitivity, where="post", label=f"{naming} evaluated on {perturbation}", alpha=0.8)
 
        
