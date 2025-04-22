@@ -1,6 +1,6 @@
 # Fast Reactor Energy Grid Design For Sensitivity Calculations (FREDS)
 
-This code was jointly developed from researchers of Belgian Nuclear Centre (SCK CEN), ULB and  UGent based on the early implementation developed by [Emilie3008](https://github.com/Emilie3008) and available in  https://github.com/Emilie3008/MScThesis_2023_2024. 
+This code was jointly developed by researchers of Belgian Nuclear Centre (SCK CEN), ULB and  UGent based on the early implementation developed by [Emilie3008](https://github.com/Emilie3008) and available in  https://github.com/Emilie3008/MScThesis_2023_2024. 
 
 ## Pre-requisites
 
