@@ -6,8 +6,9 @@ import os
 import matplotlib.pyplot as plt
 
 zai_to_nuclide = {
-    922380 : "U",
-    942390 : "Pu"
+    922350: "U235",
+    922380 : "U238",
+    942390 : "Pu239"
 }
 
 class Sensitivity:
@@ -55,7 +56,7 @@ class Sensitivity:
         pert = [k for k, v in self.notation_dict.items() if v in perts]
         filtered_perts = OrderedDict((k, v)  for k, v in self.reader.perts.items() if k in pert) if perts != list() else self.reader.perts
         if len(filtered_perts)==0:
-            raise ValueError("No perturbation match in the GPT file.\nThe problem might come form the notation dictionnaru")
+            raise ValueError("No perturbation match in the GPT file.\nThe problem might come form the notation dictionary")
         return filtered_perts
     
     def downbin(self):
@@ -180,7 +181,7 @@ class GPTSensitivity(Sensitivity):
             evaluated_sensitivity = np.concatenate((np.zeros(1),self.get_evaluated_sensitivity()[perturbation]))
 
             # naming to fix !
-            naming = f"G{zai_to_nuclide[self.zai]}-{len(self.ga_grid) + 1}"
+            naming = f"G_{zai_to_nuclide[self.zai]}-{len(self.ga_grid) + 1}"
             ax.step(self.energy_grid, evaluated_sensitivity, where="post", label=f"{naming} evaluated on {perturbation}", alpha=0.8)
 
        
@@ -301,7 +302,7 @@ class XGPTSensitivity(Sensitivity):
     
     def projection(self):
         projected_sensitivity = []
-        # Projecting in the order defined by the perts dictionnary
+        # Projecting in the order defined by the perts dictionary
         for label, index in self.xgpt_perts.items():
             if index == 0:
                 continue
@@ -338,7 +339,7 @@ class XGPTSensitivity(Sensitivity):
             # nuclide = "Pu9" if ISOTOPE == "Pu239" else "U8"
 
             # naming to fix !
-            naming = f"X{zai_to_nuclide[self.zai]}-{len(self.ga_grid) + 1}"
+            naming = f"X_{zai_to_nuclide[self.zai]}-{len(self.ga_grid) + 1}"
             ax.step(self.energy_grid, evaluated_sensitivity, where="post", label=f"{naming} evaluated on {perturbation}", alpha=0.8)
 
        
