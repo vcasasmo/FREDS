@@ -1,7 +1,6 @@
 
 # Fast Reactor Energy Grid Design For Sensitivity Calculations (FREDS)
-
-This code was jointly developed by researchers from the Belgian Nuclear Research Centre (SCK CEN), ULB, and UGent, based on the early implementation developed by Emilie3008 and available at [Emilie3008/MScThesis_2023_2024](https://github.com/Emilie3008/MScThveloped using Python version 3.12.0, as well as the following libraries and their versions:
+This code was jointly developed by researchers of Belgian Nuclear Research Centre (SCK CEN), ULB and UGent based on the early implementation developed by [Emilie3008](https://github.com/Emilie3008) and available at  https://github.com/Emilie3008/MScThesis_2023_2024. using Python version 3.12.0, as well as the following libraries and their versions:
 - `numpy` version 1.26.4
 - `serpentTools` version 0.10.1
 - `pandas` version 1.3.2
