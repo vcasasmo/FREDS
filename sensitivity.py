@@ -87,8 +87,6 @@ class Sensitivity:
         # Defining the index for filling the coarse sensitivity vector
         j = 0
 
-        energies = []
-
         # Iteration over each sensitivity coefficient
         for i in range(nSens):
 
@@ -101,24 +99,15 @@ class Sensitivity:
             # sensitivity coefficient on that group
 
             if i >= prev_cut and i < cut:
-
-                # Downbinning involves performing a weighted average, the weights being the energy intervals
-                sensitivities_evaluated[j] += sensitivity[i]*(self.energy_grid[i+1] - self.energy_grid[i])
-                energies.append(self.energy_grid[i+1] - self.energy_grid[i])
-
+                sensitivities_evaluated[j] += sensitivity[i]
+                
             # If the fine sensitivity coefficient is not inside group [prev_cut, cut], 
             # update prev_cut and cut.
             else :
-                sensitivities_evaluated[j] /= np.sum(energies) 
                 j += 1
-                energies = []
                 cut = len(sensitivity) if j >= len(self.ga_grid) else self.ga_grid[j]
                 prev_cut = 0 if j == 0 else self.ga_grid[j - 1]
-                sensitivities_evaluated[j] += sensitivity[i]*(self.energy_grid[i+1]-self.energy_grid[i])
-
-                energies.append(self.energy_grid[i+1] - self.energy_grid[i])
-
-        sensitivities_evaluated[-1] /= np.sum(energies) 
+                sensitivities_evaluated[j] += sensitivity[i]
         return sensitivities_evaluated
 
 
