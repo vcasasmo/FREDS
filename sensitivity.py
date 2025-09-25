@@ -160,6 +160,34 @@ class GPTSensitivity(Sensitivity):
 
         return up_binned_vector
     
+    def extend_alternate_version(self, sensitivity):
+        nSens = len(self.energy_grid)
+        up_binned_vector = np.zeros( (nSens - 1, ) )
+        coarse_energy_grid = self.get_ga_energy_grid()
+        j = 1
+
+        k = 0
+        for i in range(1, nSens):
+            # Energy on the left side of the coarse group
+            prev_energy = coarse_energy_grid[j - 1]
+            # Energy on the right side of the coarse group
+            energy = coarse_energy_grid[j]
+
+            # If the fine sensitivity coefficients is inside the coarse group [prev_energy, energy],
+            # copy the coarse sensitivity coefficient as the fine sensitivity coefficient value
+            if self.energy_grid[i] >= prev_energy and self.energy_grid[i] <= energy:
+             
+                up_binned_vector[i - 1] = sensitivity[j - 1]*(energy - prev_energy)
+
+                # If the fine energy matches the right side 
+                # of the coarse group, move on to the next group
+                if self.energy_grid[i] == energy:
+                    up_binned_vector[k:i] /= self.energy_grid[i] - self.energy_grid[k]
+                    k = i
+                    j += 1
+
+        return up_binned_vector
+    
     def upbin(self):
         upbinned = {}
         for reaction, sensitivity in self.gpt_sensitivities.items():
@@ -382,4 +410,4 @@ sens = GPTSensitivity("GPT/main_sens0.m", 942390, notation_dict,  perts = ["MT2"
 sens.set_ga_grid(range(1, 200, 3))
 print(sens.get_integral_sensitivity())
 print(sens.get_integral_sensitivity(True))
-sens.plot(range(1, 200, 3), coarse_grid = False)
+sens.plot(range(1, 200, 3))
