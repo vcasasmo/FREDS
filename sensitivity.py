@@ -26,6 +26,14 @@ class Sensitivity:
         self.perts = self.extract_perts(perts)
         self.reference_gpt_sensitivities = self.extract_sensitivity_coefficients()
         self.gpt_sensitivities = self.reference_gpt_sensitivities
+
+    def get_integral_sensitivity(self, reference = False):
+        int_sens = {}
+        senstocompute = self.gpt_sensitivities if not reference else self.reference_gpt_sensitivities 
+        for perturb, sensitivity in senstocompute.items(): 
+            int_sens[perturb] = np.sum(sensitivity)
+        return int_sens
+
     
     def extract_sensitivity_coefficients(self):
         gpt_vector = dict()
@@ -37,8 +45,8 @@ class Sensitivity:
             for index, item in enumerate(sensitivities):
                 sensitivity, _ = item
                 gpt_vector[reaction][index] = sensitivity
-
-            gpt_vector[reaction] /= self.reader.lethargyWidths
+            
+            gpt_vector[reaction] = gpt_vector[reaction]/np.diff(self.energy_grid)
 
         return gpt_vector
     
@@ -100,7 +108,7 @@ class Sensitivity:
 
             if i >= prev_cut and i < cut:
                 sensitivities_evaluated[j] += sensitivity[i]
-                
+
             # If the fine sensitivity coefficient is not inside group [prev_cut, cut], 
             # update prev_cut and cut.
             else :
@@ -108,6 +116,7 @@ class Sensitivity:
                 cut = len(sensitivity) if j >= len(self.ga_grid) else self.ga_grid[j]
                 prev_cut = 0 if j == 0 else self.ga_grid[j - 1]
                 sensitivities_evaluated[j] += sensitivity[i]
+
         return sensitivities_evaluated
 
 
@@ -155,7 +164,6 @@ class GPTSensitivity(Sensitivity):
     def plot(self, grid):
         
         self.set_ga_grid(grid)
-
         nPerts = len(self.perts)
         fig, axs = plt.subplots(1, nPerts, figsize=(4*nPerts, 4), sharex=True, sharey="row")
         plt.xscale("log")
@@ -173,8 +181,8 @@ class GPTSensitivity(Sensitivity):
             naming = f"G_{zai_to_nuclide[self.zai]}-{len(self.ga_grid) + 1}"
             ax.step(self.energy_grid, evaluated_sensitivity, where="post", label=f"{naming} evaluated on {perturbation}", alpha=0.8)
 
-       
-            ax.set_ylabel("Sensitivity per unit lethargy", fontsize=7)
+            
+            ax.set_ylabel("Sensitivity/$\Delta$E", fontsize=7)
 
             ax.legend(fontsize=7)
             ax.set_xlim(1e-6)
@@ -332,7 +340,7 @@ class XGPTSensitivity(Sensitivity):
             ax.step(self.energy_grid, evaluated_sensitivity, where="post", label=f"{naming} evaluated on {perturbation}", alpha=0.8)
 
        
-            ax.set_ylabel("Sensitivity per unit lethargy", fontsize=7)
+            ax.set_ylabel("Sensitivity/$\Delta$E", fontsize=7)
 
             ax.legend(fontsize=7)
             ax.set_xlim(1e-6)
@@ -344,3 +352,18 @@ class XGPTSensitivity(Sensitivity):
     
         fig.tight_layout()
         plt.show()
+
+
+
+
+
+notation_dict = {"total xs":"MT1", "ela scatt xs":"MT2",
+                 "fission xs": "MT18",  "capture xs":"MT102"}
+
+sens = GPTSensitivity("GPT/main_sens0.m", 942390, notation_dict,  perts = ["MT2", "MT18", "MT102"])
+sens.set_ga_grid(range(1, 200, 3))
+sens.downbin()
+
+print(sens.get_integral_sensitivity())
+print(sens.get_integral_sensitivity(True))
+sens.plot(range(1, 200, 3))
