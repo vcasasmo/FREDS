@@ -4,11 +4,13 @@ import numpy as np
 import glob
 import os
 import matplotlib.pyplot as plt
-
+import pandas as pd 
+#Check in Sandy
 zai_to_nuclide = {
     922350: "U235",
     922380 : "U238",
-    942390 : "Pu239"
+    942390 : "Pu239",
+    10010: 'H1'
 }
 
 class Sensitivity:
@@ -84,7 +86,6 @@ class Sensitivity:
             i += 1
         coarse_energy[-1] = self.energy_grid[-1]
         return coarse_energy
-    
     def evaluate_on_ga(self, sensitivity):
 
         nSens = len(sensitivity)
@@ -118,6 +119,50 @@ class Sensitivity:
                 sensitivities_evaluated[j] += sensitivity[i]
 
         return sensitivities_evaluated
+    # def evaluate_on_ga(self, sensitivity):
+
+        # nSens = len(sensitivity)
+        # nGASens = len(self.ga_grid)
+
+        # sensitivities_evaluated = np.zeros((nGASens + 1,))
+
+        # # Defining the index for filling the coarse sensitivity vector
+        # j = 0
+
+        # energies = []
+
+        # # Iteration over each sensitivity coefficient
+        # for i in range(nSens):
+
+            # # Defining the current cut. 
+            # cut = nSens if j >= nGASens else self.ga_grid[j]
+            # prev_cut = 0 if j == 0 else self.ga_grid[j - 1]
+
+            # # If the fine sensitivity coefficient is inside the coarse group 
+            # # defined by [prev_cut, cut], use it to evaluate the coarse 
+            # # sensitivity coefficient on that group
+
+            # if i >= prev_cut and i < cut:
+
+                # # Downbinning involves performing a weighted average, the weights being the energy intervals
+                # sensitivities_evaluated[j] += sensitivity[i]*(self.energy_grid[i+1] - self.energy_grid[i])
+                # energies.append(self.energy_grid[i+1] - self.energy_grid[i])
+
+            # # If the fine sensitivity coefficient is not inside group [prev_cut, cut], 
+            # # update prev_cut and cut.
+            # else :
+                # sensitivities_evaluated[j] /= np.sum(energies) 
+                # j += 1
+                # energies = []
+                # cut = len(sensitivity) if j >= len(self.ga_grid) else self.ga_grid[j]
+                # prev_cut = 0 if j == 0 else self.ga_grid[j - 1]
+                # sensitivities_evaluated[j] += sensitivity[i]*(self.energy_grid[i+1]-self.energy_grid[i])
+
+                # energies.append(self.energy_grid[i+1] - self.energy_grid[i])
+
+        # sensitivities_evaluated[-1] /= np.sum(energies) 
+        # print(sensitivities_evaluated)
+        # return sensitivities_evaluated
 
 
 class GPTSensitivity(Sensitivity):
@@ -166,6 +211,7 @@ class GPTSensitivity(Sensitivity):
         self.set_ga_grid(grid)
         nPerts = len(self.perts)
         fig, axs = plt.subplots(1, nPerts, figsize=(4*nPerts, 4), sharex=True, sharey="row")
+        axs = np.atleast_1d(axs)
         plt.xscale("log")
 
         for i, perturbation in enumerate(self.perts):
@@ -187,7 +233,7 @@ class GPTSensitivity(Sensitivity):
             ax.legend(fontsize=7)
             ax.set_xlim(1e-6)
             ax.set_xlabel("E (MeV)", fontsize=6)
-
+           
         fig.add_subplot(111, frame_on=False)
         plt.tick_params(labelcolor="none", top=False, bottom=False, left=False, right=False)
         # plt.xlabel("E (MeV)", fontsize=7)
