@@ -1,7 +1,10 @@
 import numpy as np
 import pandas as pd
+import ast
+from pymoo.termination.default import DefaultMultiObjectiveTermination
 from fitness_functions import CosineSimilarityGPT, CosineSimilarityXGPT
 import matplotlib.pyplot as plt
+import matplotlib as mpl
 from pymoo.core.problem import Problem
 from pymoo.optimize import minimize
 from pymoo.algorithms.moo.nsga2 import NSGA2
@@ -10,12 +13,13 @@ from pymoo.operators.sampling.rnd import IntegerRandomSampling
 from pymoo.operators.crossover.sbx import SBX
 from pymoo.operators.mutation.pm import PM
 from pymoo.operators.repair.rounding import RoundingRepair
+from scipy.interpolate import griddata
 import seaborn as sns
 import time
 from pymoo.indicators.hv import HV
-import shutil
+
 from pymoo.util.ref_dirs import get_reference_directions
-from sensitivity import GPTSensitivity,XGPTSensitivity
+
 import os
 from genetic_algorithm import GeneticAlgorithm
 import sys
@@ -61,10 +65,19 @@ class Freds:
                      sensitivities=None,
                      criteria='GPT',
                      lower_discretization=1,
-                     upper_discretization=224,
+                     upper_discretization=315,
                      optimize_groups=False,
                      algorithm = None):
+            #number of objectives init
             self.n_obj = len(sensitivities) + 1 if optimize_groups else len(sensitivities)
+            
+            #Cross-check of sensitivities' energy grid size
+            length_s = [len(s.energy_grid)-1 for s in sensitivities]
+            if len(set(length_s))!=1:
+                raise ValueError("Energy grids for all the sensitivity files have to be the same size!\n"
+                                 f"You have declared {len(sensitivities)} sensitivity objects with energy grids with size: {length_s} for files: {[sensitivities[i].reader.filePath for i in range(0,len(sensitivities))]}")
+            upper_discretization = length_s[0]
+            #handle for pymoo evaluate method
             super().__init__(
                 n_var=n_groups - 1,
                 n_obj=self.n_obj,
@@ -87,6 +100,7 @@ class Freds:
 
             sens_index = 0
             for s in sensitivities:
+                self.upper_discretization=len(s.energy_grid)-1
 
                 print(f'({sens_index+1}) Sensitivity {sens_index}: optimizing  isotope {s.zai} for observable {s.observable} in reactions:')
                 print(f'{list(s.perts.keys())}')
@@ -148,7 +162,11 @@ class Freds:
         plt.legend()
         plt.show()
 
-    def run(self,ngen=100,seed=33):
+
+
+
+
+    def run(self,ngen=100,seed=33,auto_termination=True,verbose=False):
         if self.problem is None:
             raise ValueError("Problem not set. Use .SetProblem(...) first.")
 
@@ -172,36 +190,39 @@ class Freds:
             print('Two objective functions detected: Employing Algorithm NSGA-II')
             self.algorithm = NSGA2(
 
-                pop_size=500,
+                pop_size=212,
                 sampling=IntegerRandomSampling(),
-                crossover=SBX(prob=0.8, eta=3.0, vtype=float, repair=RoundingRepair()),
-                mutation=PM(prob=0.08, eta=3.0, vtype=float, repair=RoundingRepair()),
+                crossover=SBX(prob=0.7287, eta=3.9743, vtype=float, repair=RoundingRepair()),
+                mutation=PM(prob=0.0955, eta=2.7611, vtype=float, repair=RoundingRepair()),
                 eliminate_duplicates=True,
-                n_offsprings=1000
-            )
+                n_offsprings=1068)
         elif self.problem.n_obj>=3 and self.algorithm is None:
             print('Three objective functions detected: Employing Algorithm NSGA- III')
             self.algorithm = NSGA3(
-                ref_dirs=get_reference_directions("das-dennis", self.problem.n_obj, n_partitions=12),
-                pop_size=500,
+                ref_dirs=get_reference_directions("energy", self.problem.n_obj, n_points=290),
+                pop_size=290,
                 sampling=IntegerRandomSampling(),
-                crossover=SBX(prob=0.8, eta=3.0, vtype=float, repair=RoundingRepair()),
-                mutation=PM(prob=0.08, eta=3.0, vtype=float, repair=RoundingRepair()),
+                crossover=SBX(prob=0.924342, eta=30, vtype=float, repair=RoundingRepair()),
+                mutation=PM(prob=0.028828778, eta=48, vtype=float, repair=RoundingRepair()),
                 eliminate_duplicates=True,
                 n_offsprings=1000
             )
 
         print("Optimization has started ...\n")
         print('########################################################################\n')
+        if auto_termination:
 
+            termination= DefaultMultiObjectiveTermination()
+        else:
+            termination =("n_gen",ngen)
 
 
         self.result = minimize(
             self.problem,
             self.algorithm,
-            ('n_gen', ngen),
+            termination,
             seed=seed,
-            verbose=True,
+            verbose=verbose,
             callback=self.metrics.record
         )
 
@@ -213,6 +234,7 @@ class Freds:
         print()
         print('Optimization Results:\n')
         print(df_display)
+        return self.metrics.hypervolume
 
     def show_results(self):
         if not hasattr(self, "result") or self.result is None:
@@ -220,16 +242,22 @@ class Freds:
 
         X = self.result.X
         F = self.result.F
+
+
+        print("F.shape ")
+        print(F.shape)
         n_var = self.problem.n_var
 
-
         # Convert X to lists
-        rows_as_lists = [sorted(row) for row in X.tolist()]
+        rows_as_lists = [sorted(set(row)) for row in X.tolist()]
+
         df_results = pd.DataFrame({"Energy Grid": rows_as_lists})
+
 
         # Create fitness columns
         fitness_cols = [f"Fitness_{i + 1}" for i in range(F.shape[1])]
         df_F = pd.DataFrame(F, columns=fitness_cols)
+
         # If optimizing number of groups, extract last fitness, convert to N_Groups, and drop it
         if self.optimize_groups:
             # Use all but the last fitness column
@@ -240,17 +268,21 @@ class Freds:
             df_results["N_Groups"] = df_F[fitness_cols[-1]] * n_var
             df_results.sort_values(by="N_Groups", ascending=False, inplace=True)
             df_results.reset_index(drop=True, inplace=True)
+
+
         else:
             # Keep all fitness columns as-is
             for col in df_F.columns:
                 df_results[col] = df_F[col]
-        return df_results
+        df_temp = df_results.copy()
+        df_temp["Energy Grid"] = df_temp["Energy Grid"].apply(lambda x: tuple(x))
+        df_unique = df_temp.drop_duplicates()
+        df_unique.reset_index(drop=True, inplace=True)
+        return df_unique
     def save_results(self, filename = None):
 
         output_dir = "./result_FREDS"
-        if os.path.exists(output_dir):
-            shutil.rmtree(output_dir)
-        os.makedirs(output_dir)
+        os.makedirs(output_dir, exist_ok=True)
         default_prefix = self.problem.criteria
         default_filename = f"{default_prefix}_{self.problem.n_var + 1}G_results.csv"
         final_filename = filename if filename is not None else default_filename
@@ -261,6 +293,7 @@ class Freds:
 
     def load_results(self, filename):
         self.df_results = pd.read_csv(filename)
+        self.df_results['Energy Grid'] = self.df_results['Energy Grid'].apply(ast.literal_eval)
         print('Results loaded from file')
         df_display = self.df_results.copy()
         df_display["Energy Grid"] = df_display["Energy Grid"].apply(
@@ -293,7 +326,8 @@ class Freds:
                 print(f'{list(s.perts.keys())}')
 
                 row = self.df_results.loc[idx]
-                res_grids = np.row["Energy Grid"]
+                print(row["Energy Grid"])
+                res_grids = row["Energy Grid"]
                 s.plot(res_grids)
                 sens_index += 1
 
@@ -302,7 +336,8 @@ class Freds:
         Plots Pareto front from self.df_result.
 
         - 2D scatter if exactly 2 fitness columns
-        - Pairplot matrix if more than 2
+        - Pairplot matrix and Heatmap if more than 2
+
         """
 
         obj_cols = [col for col in self.df_results.columns
@@ -327,9 +362,41 @@ class Freds:
         else:
             # Matrix plot
             sns.pairplot(df_fitness)
-            #plt.subtitle("Pareto Front Matrix", y=1.02)
             plt.show()
-
+            
+            if len(obj_cols) == 3:
+                #Heat map
+                
+                
+                # Interpolation over grid 2D
+                x = df_fitness.values[:,0]
+                y = df_fitness.values[:,1]
+                z = df_fitness.values[:,2]
+                norm = mpl.colors.Normalize(vmin=0, vmax=z.max())
+                cmap = plt.cm.viridis
+                sm = mpl.cm.ScalarMappable(cmap=cmap, norm=norm)
+                sm.set_array([])  # necesario para la colorbar
+                xi = np.linspace(x.min(), x.max(), 100)
+                yi = np.linspace(y.min(), y.max(), 100)
+                XI, YI = np.meshgrid(xi, yi)
+                ZI = griddata((x, y), z, (XI, YI), method='cubic')
+    
+                # Fig creation
+                fig, ax = plt.subplots(figsize=(8,6))
+    
+                #Glob normalization heatmap
+                heatmap = ax.contourf(XI, YI, ZI, levels=20, cmap=cmap, alpha=0.8, norm=norm)
+                contours = ax.contour(XI, YI, ZI, levels=5, colors='black', linewidths=0.8)
+                ax.clabel(contours, inline=True, fontsize=8)
+    
+                ax.set_xlabel("Fitness 1", fontsize=12)
+                ax.set_ylabel("Fitness 2", fontsize=12)
+                # Colorbar global
+                cbar = fig.colorbar(sm, ax=ax)
+                cbar.set_label("Fitness 3", fontsize=12)
+    
+                plt.tight_layout()
+    
 
 FREDS=Freds()
 
