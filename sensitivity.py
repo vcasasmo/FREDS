@@ -5,6 +5,7 @@ import glob
 import os
 import matplotlib.pyplot as plt
 import pandas as pd 
+
 #Check in Sandy
 zai_to_nuclide = {
     922350: "U235",
@@ -30,12 +31,16 @@ class Sensitivity:
         self.gpt_sensitivities = self.reference_gpt_sensitivities
 
     def get_integral_sensitivity(self, reference = False):
+        self.downbin()
+        self.upbin()
         int_sens = {}
         senstocompute = self.gpt_sensitivities if not reference else self.reference_gpt_sensitivities 
         for perturb, sensitivity in senstocompute.items(): 
             int_sens[perturb] = np.sum(sensitivity)
         return int_sens
-
+    
+    def upbin(self):
+        raise NotImplementedError
     
     def extract_sensitivity_coefficients(self):
         gpt_vector = dict()
@@ -86,6 +91,7 @@ class Sensitivity:
             i += 1
         coarse_energy[-1] = self.energy_grid[-1]
         return coarse_energy
+    
     def evaluate_on_ga(self, sensitivity):
 
         nSens = len(sensitivity)
@@ -119,50 +125,6 @@ class Sensitivity:
                 sensitivities_evaluated[j] += sensitivity[i]
 
         return sensitivities_evaluated
-    # def evaluate_on_ga(self, sensitivity):
-
-        # nSens = len(sensitivity)
-        # nGASens = len(self.ga_grid)
-
-        # sensitivities_evaluated = np.zeros((nGASens + 1,))
-
-        # # Defining the index for filling the coarse sensitivity vector
-        # j = 0
-
-        # energies = []
-
-        # # Iteration over each sensitivity coefficient
-        # for i in range(nSens):
-
-            # # Defining the current cut. 
-            # cut = nSens if j >= nGASens else self.ga_grid[j]
-            # prev_cut = 0 if j == 0 else self.ga_grid[j - 1]
-
-            # # If the fine sensitivity coefficient is inside the coarse group 
-            # # defined by [prev_cut, cut], use it to evaluate the coarse 
-            # # sensitivity coefficient on that group
-
-            # if i >= prev_cut and i < cut:
-
-                # # Downbinning involves performing a weighted average, the weights being the energy intervals
-                # sensitivities_evaluated[j] += sensitivity[i]*(self.energy_grid[i+1] - self.energy_grid[i])
-                # energies.append(self.energy_grid[i+1] - self.energy_grid[i])
-
-            # # If the fine sensitivity coefficient is not inside group [prev_cut, cut], 
-            # # update prev_cut and cut.
-            # else :
-                # sensitivities_evaluated[j] /= np.sum(energies) 
-                # j += 1
-                # energies = []
-                # cut = len(sensitivity) if j >= len(self.ga_grid) else self.ga_grid[j]
-                # prev_cut = 0 if j == 0 else self.ga_grid[j - 1]
-                # sensitivities_evaluated[j] += sensitivity[i]*(self.energy_grid[i+1]-self.energy_grid[i])
-
-                # energies.append(self.energy_grid[i+1] - self.energy_grid[i])
-
-        # sensitivities_evaluated[-1] /= np.sum(energies) 
-        # print(sensitivities_evaluated)
-        # return sensitivities_evaluated
 
 
 class GPTSensitivity(Sensitivity):
@@ -176,6 +138,7 @@ class GPTSensitivity(Sensitivity):
         coarse_energy_grid = self.get_ga_energy_grid()
         j = 1
 
+        k = 0
         for i in range(1, nSens):
             # Energy on the left side of the coarse group
             prev_energy = coarse_energy_grid[j - 1]
@@ -185,11 +148,14 @@ class GPTSensitivity(Sensitivity):
             # If the fine sensitivity coefficients is inside the coarse group [prev_energy, energy],
             # copy the coarse sensitivity coefficient as the fine sensitivity coefficient value
             if self.energy_grid[i] >= prev_energy and self.energy_grid[i] <= energy:
+             
                 up_binned_vector[i - 1] = sensitivity[j - 1]
 
                 # If the fine energy matches the right side 
                 # of the coarse group, move on to the next group
                 if self.energy_grid[i] == energy:
+                    up_binned_vector[k:i] /= i - k
+                    k = i
                     j += 1
 
         return up_binned_vector
@@ -206,7 +172,7 @@ class GPTSensitivity(Sensitivity):
     def get_reference_sensitivity(self):
         return self.reference_gpt_sensitivities
     
-    def plot(self, grid):
+    def plot(self, grid, coarse_grid = False):
         
         self.set_ga_grid(grid)
         nPerts = len(self.perts)
@@ -220,13 +186,19 @@ class GPTSensitivity(Sensitivity):
             ax.step(self.energy_grid, reference_sensitivity, linestyle="-", where="post", color="grey", alpha=0.3)
 
             self.downbin()
-            self.upbin()
+            if not coarse_grid:
+                self.upbin()
+                energy_grid = self.energy_grid
+            else:
+                energy_grid = self.get_ga_energy_grid()
+
             evaluated_sensitivity = np.concatenate((np.zeros(1),self.get_evaluated_sensitivity()[perturbation]))
 
             # naming to fix !
             naming = f"G_{zai_to_nuclide[self.zai]}-{len(self.ga_grid) + 1}"
-            ax.step(self.energy_grid, evaluated_sensitivity, where="post", label=f"{naming} evaluated on {perturbation}", alpha=0.8)
+            ax.step(energy_grid, evaluated_sensitivity, where="post", label=f"{naming} evaluated on {perturbation}", alpha=0.8)
 
+            print(f"{naming}, integral sensitivity of the evaluated sens = {np.sum(evaluated_sensitivity)}")
             
             ax.set_ylabel("Sensitivity/$\Delta$E", fontsize=7)
 
@@ -234,9 +206,9 @@ class GPTSensitivity(Sensitivity):
             ax.set_xlim(1e-6)
             ax.set_xlabel("E (MeV)", fontsize=6)
            
-        fig.add_subplot(111, frame_on=False)
-        plt.tick_params(labelcolor="none", top=False, bottom=False, left=False, right=False)
-        # plt.xlabel("E (MeV)", fontsize=7)
+        # fig.add_subplot(111, frame_on=False)
+        # plt.tick_params(labelcolor="none", top=False, bottom=False, left=False, right=False)
+      
     
         fig.tight_layout()
         plt.show()
@@ -408,8 +380,6 @@ notation_dict = {"total xs":"MT1", "ela scatt xs":"MT2",
 
 sens = GPTSensitivity("GPT/main_sens0.m", 942390, notation_dict,  perts = ["MT2", "MT18", "MT102"])
 sens.set_ga_grid(range(1, 200, 3))
-sens.downbin()
-
 print(sens.get_integral_sensitivity())
 print(sens.get_integral_sensitivity(True))
-sens.plot(range(1, 200, 3))
+sens.plot(range(1, 200, 3), coarse_grid = False)
