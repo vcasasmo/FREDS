@@ -19,6 +19,11 @@ class Sensitivity:
         """
         """
         self.reader =  serpentTools.read(filepath)
+        p = self.reader.energyIntegratedSens["keff"]
+
+
+
+
         self.observable = observable
         self.notation_dict = notation_dict
         self.zai = zai
@@ -46,6 +51,7 @@ class Sensitivity:
         gpt_vector = dict()
 
         for reaction, reaction_index in self.perts.items():
+
             sensitivities = self.reader.sensitivities[self.observable][0][self.zai_index][reaction_index]
             gpt_vector[reaction] = np.zeros((self.nEnergyGroups,))
 
@@ -53,7 +59,8 @@ class Sensitivity:
                 sensitivity, _ = item
                 gpt_vector[reaction][index] = sensitivity
             
-            gpt_vector[reaction] = gpt_vector[reaction]/np.diff(self.energy_grid)
+            p = np.diff(self.energy_grid)
+            # gpt_vector[reaction] = gpt_vector[reaction]
 
         return gpt_vector
     
@@ -163,7 +170,7 @@ class GPTSensitivity(Sensitivity):
     def upbin(self):
         upbinned = {}
         for reaction, sensitivity in self.gpt_sensitivities.items():
-            upbinned[reaction] = self.extend_alternate_version(sensitivity)
+            upbinned[reaction] = self.extend(sensitivity)
         self.gpt_sensitivities = upbinned
 
     def get_evaluated_sensitivity(self):
@@ -200,7 +207,7 @@ class GPTSensitivity(Sensitivity):
 
             print(f"{naming}, integral sensitivity of the evaluated sens = {np.sum(evaluated_sensitivity)}")
             
-            ax.set_ylabel("Sensitivity/$\Delta$E", fontsize=7)
+            ax.set_ylabel("Sensitivity", fontsize=7)
 
             ax.legend(fontsize=7)
             ax.set_xlim(1e-6)
@@ -358,7 +365,7 @@ class XGPTSensitivity(Sensitivity):
             ax.step(self.energy_grid, evaluated_sensitivity, where="post", label=f"{naming} evaluated on {perturbation}", alpha=0.8)
 
        
-            ax.set_ylabel("Sensitivity/$\Delta$E", fontsize=7)
+            ax.set_ylabel("Sensitivity", fontsize=7)
 
             ax.legend(fontsize=7)
             ax.set_xlim(1e-6)
@@ -366,8 +373,7 @@ class XGPTSensitivity(Sensitivity):
 
         fig.add_subplot(111, frame_on=False)
         plt.tick_params(labelcolor="none", top=False, bottom=False, left=False, right=False)
-        # plt.xlabel("E (MeV)", fontsize=7)
-    
+
         fig.tight_layout()
         plt.show()
 
@@ -378,8 +384,14 @@ class XGPTSensitivity(Sensitivity):
 notation_dict = {"total xs":"MT1", "ela scatt xs":"MT2",
                  "fission xs": "MT18",  "capture xs":"MT102"}
 
-sens = GPTSensitivity("GPT/main_sens0.m", 942390, notation_dict,  perts = ["MT2", "MT18", "MT102"])
-sens.set_ga_grid(range(1, 200, 3))
-print(sens.get_integral_sensitivity())
-print(sens.get_integral_sensitivity(True))
-sens.plot(range(1, 200, 3), False)
+sens = GPTSensitivity("GPT/BFS_61_0_core_sens0.m", 942390, notation_dict,  perts = ["MT2", "MT18", "MT102"])
+# sens.set_ga_grid(range(1, 200, 3))
+# print(sens.get_integral_sensitivity())
+# print(sens.get_integral_sensitivity(True))
+sens.plot(range(1, 200, 10), True)
+
+
+# [ 2.83435e-03,  1.00000e-01],
+# [ 2.83435e-03,  1.00000e-01],
+# [ 5.91568e-01,  2.10000e-04],
+# [-4.41956e-02,  1.00000e-03]]

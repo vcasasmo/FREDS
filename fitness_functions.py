@@ -12,7 +12,7 @@ class ObjectiveFunction:
         similarity = dot_product / (norm_A * norm_B)
         return similarity
 
-    def get_fitness(self, ga_grid):
+    def get_fitness(self):
         raise NotImplementedError
 
 class CosineSimilarityGPT(ObjectiveFunction):
