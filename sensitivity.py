@@ -151,11 +151,11 @@ class GPTSensitivity(Sensitivity):
             # copy the coarse sensitivity coefficient as the fine sensitivity coefficient value
             if self.energy_grid[i] >= prev_energy and self.energy_grid[i] <= energy:
              
-                up_binned_vector[i - 1] = sensitivity[j - 1]*(self.energy_grid[i]-self.energy_grid[i-1])
+                up_binned_vector[i - 1] = sensitivity[j - 1]
                 m += 1
                
                 if self.energy_grid[i] == energy:
-                    up_binned_vector[ k : i ] /= energy - prev_energy
+                    up_binned_vector[ k : i ] /= m
                     m = 0
                     k = i
                     j += 1
@@ -180,7 +180,7 @@ class GPTSensitivity(Sensitivity):
         nPerts = len(self.perts)
         fig, axs = plt.subplots(1, nPerts, figsize=(4*nPerts, 4), sharex=True, sharey="row")
         axs = np.atleast_1d(axs)
-        # plt.xscale("log")
+        plt.xscale("log")
 
         for i, perturbation in enumerate(self.perts):
             ax = axs[i]
