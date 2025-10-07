@@ -103,24 +103,20 @@ class Sensitivity:
 
         # Iteration over each sensitivity coefficient
         for i in range(nSens):
-
             # Defining the current cut. 
-            cut = nSens if j >= nGASens else self.ga_grid[j]
-            prev_cut = 0 if j == 0 else self.ga_grid[j - 1]
+            cut = self.ga_grid[j] if j < nGASens else nSens
 
             # If the fine sensitivity coefficient is inside the coarse group 
             # defined by [prev_cut, cut], use it to evaluate the coarse 
             # sensitivity coefficient on that group
 
-            if i >= prev_cut and i < cut:
+            if i < cut:
                 sensitivities_evaluated[j] += sensitivity[i]
 
             # If the fine sensitivity coefficient is not inside group [prev_cut, cut], 
             # update prev_cut and cut.
             else :
-                j += 1
-                cut = len(sensitivity) if j >= len(self.ga_grid) else self.ga_grid[j]
-                prev_cut = 0 if j == 0 else self.ga_grid[j - 1]
+                j += 1               
                 sensitivities_evaluated[j] += sensitivity[i]
 
         return sensitivities_evaluated
@@ -179,24 +175,25 @@ class GPTSensitivity(Sensitivity):
         axs = np.atleast_1d(axs)
         plt.xscale("log")
 
+        self.downbin()
+
+        if not coarse_grid:
+            self.upbin()
+            energy_grid = self.energy_grid
+        else:
+            energy_grid = self.get_ga_energy_grid()
+
         for i, perturbation in enumerate(self.perts):
             ax = axs[i]
             reference_sensitivity = np.concatenate((np.zeros(1), self.get_reference_sensitivity()[perturbation]))
             ax.step(self.energy_grid, reference_sensitivity, linestyle="-", where="post", color="grey", alpha=0.3)
-
-            self.downbin()
-
-            if not coarse_grid:
-                self.upbin()
-                energy_grid = self.energy_grid
-            else:
-                energy_grid = self.get_ga_energy_grid()
 
             evaluated_sensitivity = np.concatenate((np.zeros(1), self.get_evaluated_sensitivity()[perturbation]))
 
             naming = f"G_{zai_to_nuclide[self.zai]}-{len(self.ga_grid) + 1}"
             ax.step(energy_grid, evaluated_sensitivity, where="post", label=f"{naming} evaluated on {perturbation}", alpha=0.8)            
             ax.set_ylabel("Sensitivity", fontsize=7)
+
 
             ax.legend(fontsize=7)
             ax.set_xlim(1e-6)
@@ -350,7 +347,7 @@ class XGPTSensitivity(Sensitivity):
             naming = f"X_{zai_to_nuclide[self.zai]}-{len(self.ga_grid) + 1}"
             ax.step(self.energy_grid, evaluated_sensitivity, where="post", label=f"{naming} evaluated on {perturbation}", alpha=0.8)
 
-       
+      
             ax.set_ylabel("Sensitivity", fontsize=7)
 
             ax.legend(fontsize=7)
@@ -374,4 +371,4 @@ sens = GPTSensitivity("GPT/main_sens0.m", 942390, notation_dict,  perts = ["MT2"
 # sens.set_ga_grid(range(1, 200, 3))
 # print(sens.get_integral_sensitivity())
 # print(sens.get_integral_sensitivity(True))
-sens.plot(range(1, 200, 2), True)
+sens.plot(range(1, 226, 3), True)
