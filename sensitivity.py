@@ -19,11 +19,6 @@ class Sensitivity:
         """
         """
         self.reader =  serpentTools.read(filepath)
-        p = self.reader.energyIntegratedSens["keff"]
-
-
-
-
         self.observable = observable
         self.notation_dict = notation_dict
         self.zai = zai
@@ -59,7 +54,7 @@ class Sensitivity:
                 sensitivity, _ = item
                 gpt_vector[reaction][index] = sensitivity
             
-            p = np.diff(self.energy_grid)
+            # p = np.diff(self.energy_grid)
             # gpt_vector[reaction] = gpt_vector[reaction]
 
         return gpt_vector
@@ -144,7 +139,7 @@ class GPTSensitivity(Sensitivity):
         up_binned_vector = np.zeros( (nSens - 1, ) )
         coarse_energy_grid = self.get_ga_energy_grid()
         j = 1
-
+        m = 0
         k = 0
         for i in range(1, nSens):
             # Energy on the left side of the coarse group
@@ -156,12 +151,12 @@ class GPTSensitivity(Sensitivity):
             # copy the coarse sensitivity coefficient as the fine sensitivity coefficient value
             if self.energy_grid[i] >= prev_energy and self.energy_grid[i] <= energy:
              
-                up_binned_vector[i - 1] = sensitivity[j - 1]*(self.energy_grid[i] - self.energy_grid[i-1])
-
-                # If the fine energy matches the right side 
-                # of the coarse group, move on to the next group
+                up_binned_vector[i - 1] = sensitivity[j - 1]*(self.energy_grid[i]-self.energy_grid[i-1])
+                m += 1
+               
                 if self.energy_grid[i] == energy:
-                    up_binned_vector[k:i] /= self.energy_grid[i] - self.energy_grid[k]
+                    up_binned_vector[ k : i ] /= energy - prev_energy
+                    m = 0
                     k = i
                     j += 1
 
@@ -179,13 +174,13 @@ class GPTSensitivity(Sensitivity):
     def get_reference_sensitivity(self):
         return self.reference_gpt_sensitivities
     
-    def plot(self, grid, coarse_grid = False):
+    def plot(self, grid, coarse_grid = True):
         
         self.set_ga_grid(grid)
         nPerts = len(self.perts)
         fig, axs = plt.subplots(1, nPerts, figsize=(4*nPerts, 4), sharex=True, sharey="row")
         axs = np.atleast_1d(axs)
-        plt.xscale("log")
+        # plt.xscale("log")
 
         for i, perturbation in enumerate(self.perts):
             ax = axs[i]
@@ -193,15 +188,15 @@ class GPTSensitivity(Sensitivity):
             ax.step(self.energy_grid, reference_sensitivity, linestyle="-", where="post", color="grey", alpha=0.3)
 
             self.downbin()
+
             if not coarse_grid:
                 self.upbin()
                 energy_grid = self.energy_grid
             else:
                 energy_grid = self.get_ga_energy_grid()
 
-            evaluated_sensitivity = np.concatenate((np.zeros(1),self.get_evaluated_sensitivity()[perturbation]))
+            evaluated_sensitivity = np.concatenate((np.zeros(1), self.get_evaluated_sensitivity()[perturbation]))
 
-            # naming to fix !
             naming = f"G_{zai_to_nuclide[self.zai]}-{len(self.ga_grid) + 1}"
             ax.step(energy_grid, evaluated_sensitivity, where="post", label=f"{naming} evaluated on {perturbation}", alpha=0.8)
 
@@ -384,11 +379,11 @@ class XGPTSensitivity(Sensitivity):
 notation_dict = {"total xs":"MT1", "ela scatt xs":"MT2",
                  "fission xs": "MT18",  "capture xs":"MT102"}
 
-sens = GPTSensitivity("GPT/BFS_61_0_core_sens0.m", 942390, notation_dict,  perts = ["MT2", "MT18", "MT102"])
+sens = GPTSensitivity("GPT/main_sens0.m", 942390, notation_dict,  perts = ["MT2", "MT18", "MT102"])
 # sens.set_ga_grid(range(1, 200, 3))
 # print(sens.get_integral_sensitivity())
 # print(sens.get_integral_sensitivity(True))
-sens.plot(range(1, 200, 10), True)
+sens.plot(range(1, 200, 10), False)
 
 
 # [ 2.83435e-03,  1.00000e-01],

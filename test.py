@@ -38,4 +38,28 @@ a_energies = [0, 0.1, 1, 10, 20]
 b_energies = [0, 0.1, 10, 20]
 
 
-print(evaluate_on_ga([-0.00267184, -0.00211942, 0.00872873, 0], [1, 3]))
+
+
+
+from fitness_functions import CosineSimilarityGPT
+from sensitivity import GPTSensitivity
+
+notation_dict = {"total xs":"MT1", "ela scatt xs":"MT2",
+                 "fission xs": "MT18",  "capture xs":"MT102"}
+
+sens = GPTSensitivity("GPT/main_sens0.m", 942390, notation_dict,  perts = ["MT2", "MT18", "MT102"])
+# sens.set_ga_grid(range(1, 200, 3))
+# print(sens.get_integral_sensitivity())
+# print(sens.get_integral_sensitivity(True))
+# sens.plot(range(1, 200, 10), True)
+
+ff = CosineSimilarityGPT(sens)
+print(ff.get_fitness(range(1, 200, 10)))
+
+
+
+#  New version of the upbinning : 0.060601243190966825
+#  Old version                  : 0.22994652159656814
+
+# New version, new ff :           0.397625489554401
+# Old version, new ff :           0.1988065314198758
