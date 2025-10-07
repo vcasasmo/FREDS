@@ -53,9 +53,6 @@ class Sensitivity:
             for index, item in enumerate(sensitivities):
                 sensitivity, _ = item
                 gpt_vector[reaction][index] = sensitivity
-            
-            # p = np.diff(self.energy_grid)
-            # gpt_vector[reaction] = gpt_vector[reaction]
 
         return gpt_vector
     
@@ -198,10 +195,7 @@ class GPTSensitivity(Sensitivity):
             evaluated_sensitivity = np.concatenate((np.zeros(1), self.get_evaluated_sensitivity()[perturbation]))
 
             naming = f"G_{zai_to_nuclide[self.zai]}-{len(self.ga_grid) + 1}"
-            ax.step(energy_grid, evaluated_sensitivity, where="post", label=f"{naming} evaluated on {perturbation}", alpha=0.8)
-
-            print(f"{naming}, integral sensitivity of the evaluated sens = {np.sum(evaluated_sensitivity)}")
-            
+            ax.step(energy_grid, evaluated_sensitivity, where="post", label=f"{naming} evaluated on {perturbation}", alpha=0.8)            
             ax.set_ylabel("Sensitivity", fontsize=7)
 
             ax.legend(fontsize=7)
@@ -352,9 +346,6 @@ class XGPTSensitivity(Sensitivity):
             self.upbin(plot=True)
             evaluated_sensitivity = np.concatenate((np.zeros(1),self.gpt_sensitivities[perturbation]))
 
-            # prefix = "G" if label == "GPT" else "X" if label == "XGPT" else "V"
-            # nuclide = "Pu9" if ISOTOPE == "Pu239" else "U8"
-
             # naming to fix !
             naming = f"X_{zai_to_nuclide[self.zai]}-{len(self.ga_grid) + 1}"
             ax.step(self.energy_grid, evaluated_sensitivity, where="post", label=f"{naming} evaluated on {perturbation}", alpha=0.8)
@@ -383,10 +374,4 @@ sens = GPTSensitivity("GPT/main_sens0.m", 942390, notation_dict,  perts = ["MT2"
 # sens.set_ga_grid(range(1, 200, 3))
 # print(sens.get_integral_sensitivity())
 # print(sens.get_integral_sensitivity(True))
-sens.plot(range(1, 200, 10), False)
-
-
-# [ 2.83435e-03,  1.00000e-01],
-# [ 2.83435e-03,  1.00000e-01],
-# [ 5.91568e-01,  2.10000e-04],
-# [-4.41956e-02,  1.00000e-03]]
+sens.plot(range(1, 200, 2), True)
