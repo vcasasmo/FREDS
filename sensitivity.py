@@ -115,8 +115,8 @@ class Sensitivity:
 
             # If the fine sensitivity coefficient is not inside group [prev_cut, cut], 
             # update prev_cut and cut.
-            else :
-                j += 1               
+            else :      
+                j += 1
                 sensitivities_evaluated[j] += sensitivity[i]
 
         return sensitivities_evaluated
@@ -185,10 +185,10 @@ class GPTSensitivity(Sensitivity):
 
         for i, perturbation in enumerate(self.perts):
             ax = axs[i]
-            reference_sensitivity = np.concatenate((np.zeros(1), self.get_reference_sensitivity()[perturbation]))
+            reference_sensitivity = np.concatenate((self.get_reference_sensitivity()[perturbation], np.zeros(1)))
             ax.step(self.energy_grid, reference_sensitivity, linestyle="-", where="post", color="grey", alpha=0.3)
 
-            evaluated_sensitivity = np.concatenate((np.zeros(1), self.get_evaluated_sensitivity()[perturbation]))
+            evaluated_sensitivity = np.concatenate(( self.get_evaluated_sensitivity()[perturbation], np.zeros(1)))
 
             naming = f"G_{zai_to_nuclide[self.zai]}-{len(self.ga_grid) + 1}"
             ax.step(energy_grid, evaluated_sensitivity, where="post", label=f"{naming} evaluated on {perturbation}", alpha=0.8)            
@@ -367,8 +367,15 @@ class XGPTSensitivity(Sensitivity):
 notation_dict = {"total xs":"MT1", "ela scatt xs":"MT2",
                  "fission xs": "MT18",  "capture xs":"MT102"}
 
-sens = GPTSensitivity("GPT/main_sens0.m", 942390, notation_dict,  perts = ["MT2", "MT18", "MT102"])
+# sens = GPTSensitivity("GPT/jezebel.i_sens0.m", 942390 , notation_dict,  perts = ["MT2", "MT18", "MT102"])
+# # sens.set_ga_grid(range(1, 200, 3))
+# # print(sens.get_integral_sensitivity())
+# # print(sens.get_integral_sensitivity(True))
+# sens.plot(range(1, 226, 10), True)
+
+sens = GPTSensitivity("GPT/jezebel.i_sens0.m", 942390 , notation_dict,  perts = ["MT2", "MT18", "MT102"])
 # sens.set_ga_grid(range(1, 200, 3))
 # print(sens.get_integral_sensitivity())
 # print(sens.get_integral_sensitivity(True))
-sens.plot(range(1, 226, 3), True)
+sens.plot([263, 272, 280, 282, 285, 287, 296], True)
+# [263, 272, 280, 282, 285, 287, 296]
