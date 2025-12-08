@@ -1,5 +1,5 @@
 
-# Fast Reactor Energy Grid Design For Sensitivity Calculations (FREDS)
+# Fit Reactor Energy Discretization Search (FREDS)
 This code was jointly developed by researchers of Belgian Nuclear Research Centre (SCK CEN), ULB and UGent based on the early implementation developed by [Emilie3008](https://github.com/Emilie3008) and available at  https://github.com/Emilie3008/MScThesis_2023_2024. using Python version 3.12.0, as well as the following libraries and their versions:
 - `numpy` version 1.26.4
 - `serpentTools` version 0.10.1
@@ -24,3 +24,4 @@ For single-objective problems, i.e., minimizing the dissimilarity between a fine
 
 ## Usage
 To get started with FREDS, you can use the `test.ipynb` notebook provided in the repository. This notebook will guide you through the functionalities of the software, demonstrating how to set up and run sensitivity calculations and optimizations.
+
