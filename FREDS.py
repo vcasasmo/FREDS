@@ -190,22 +190,22 @@ class Freds:
             print('Two objective functions detected: Employing Algorithm NSGA-II')
             self.algorithm = NSGA2(
 
-                pop_size=212,
+                pop_size=313,
                 sampling=IntegerRandomSampling(),
-                crossover=SBX(prob=0.7287, eta=3.9743, vtype=float, repair=RoundingRepair()),
-                mutation=PM(prob=0.0955, eta=2.7611, vtype=float, repair=RoundingRepair()),
+                crossover=SBX(prob=0.797769, eta=4.492767864, vtype=float, repair=RoundingRepair()),
+                mutation=PM(prob=0.03903, eta=4.807148087, vtype=float, repair=RoundingRepair()),
                 eliminate_duplicates=True,
-                n_offsprings=1068)
+                n_offsprings=1079)
         elif self.problem.n_obj>=3 and self.algorithm is None:
             print('Three objective functions detected: Employing Algorithm NSGA- III')
             self.algorithm = NSGA3(
-                ref_dirs=get_reference_directions("energy", self.problem.n_obj, n_points=290),
-                pop_size=290,
+                ref_dirs=get_reference_directions("energy", self.problem.n_obj, n_points=300),
+                pop_size=300,
                 sampling=IntegerRandomSampling(),
-                crossover=SBX(prob=0.924342, eta=30, vtype=float, repair=RoundingRepair()),
-                mutation=PM(prob=0.028828778, eta=48, vtype=float, repair=RoundingRepair()),
+                crossover=SBX(prob=0.9323, eta=30, vtype=float, repair=RoundingRepair()),
+                mutation=PM(prob=0.0535, eta=20, vtype=float, repair=RoundingRepair()),
                 eliminate_duplicates=True,
-                n_offsprings=1000
+                n_offsprings=600
             )
 
         print("Optimization has started ...\n")

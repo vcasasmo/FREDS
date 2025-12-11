@@ -4,7 +4,7 @@ import numpy as np
 import glob
 import os
 import matplotlib.pyplot as plt
-import pandas as pd 
+
 
 #Check in Sandy
 zai_to_nuclide = {
@@ -167,7 +167,7 @@ class GPTSensitivity(Sensitivity):
     def get_reference_sensitivity(self):
         return self.reference_gpt_sensitivities
     
-    def plot(self, grid, coarse_grid = True):
+    def plot(self, grid, coarse_grid = False):
         
         self.set_ga_grid(grid)
         nPerts = len(self.perts)
@@ -364,18 +364,18 @@ class XGPTSensitivity(Sensitivity):
 
 
 
-notation_dict = {"total xs":"MT1", "ela scatt xs":"MT2",
-                 "fission xs": "MT18",  "capture xs":"MT102"}
+# notation_dict = {"total xs":"MT1", "ela scatt xs":"MT2",
+#                  "fission xs": "MT18",  "capture xs":"MT102"}
+
+# # sens = GPTSensitivity("GPT/jezebel.i_sens0.m", 942390 , notation_dict,  perts = ["MT2", "MT18", "MT102"])
+# # # sens.set_ga_grid(range(1, 200, 3))
+# # # print(sens.get_integral_sensitivity())
+# # # print(sens.get_integral_sensitivity(True))
+# # sens.plot(range(1, 226, 10), True)
 
 # sens = GPTSensitivity("GPT/jezebel.i_sens0.m", 942390 , notation_dict,  perts = ["MT2", "MT18", "MT102"])
 # # sens.set_ga_grid(range(1, 200, 3))
 # # print(sens.get_integral_sensitivity())
 # # print(sens.get_integral_sensitivity(True))
-# sens.plot(range(1, 226, 10), True)
-
-sens = GPTSensitivity("GPT/jezebel.i_sens0.m", 942390 , notation_dict,  perts = ["MT2", "MT18", "MT102"])
-# sens.set_ga_grid(range(1, 200, 3))
-# print(sens.get_integral_sensitivity())
-# print(sens.get_integral_sensitivity(True))
-sens.plot([263, 272, 280, 282, 285, 287, 296], True)
+# sens.plot([263, 272, 280, 282, 285, 287, 296], True)
 # [263, 272, 280, 282, 285, 287, 296]
