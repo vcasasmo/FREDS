@@ -140,7 +140,7 @@ if __name__ == "__main__":
     from sensitivity import GPTSensitivity
 
     # Example sensitivities
-    filepath = "GPT/uam.i_sens0.m"
+    filepath = "GPT/uam_hzp.i_sens0.m"
     notation_dict = {
         "total xs": "MT1",
         "ela scatt xs": "MT2",
@@ -166,4 +166,5 @@ if __name__ == "__main__":
         criteria='GPT',
         n_processes=2 #Cores available in your machine for the task
     )
+
 
