@@ -99,7 +99,7 @@ def run_study(pair_name, sensitivities, n_groups, seeds, n_trials, criteria):
 # ======================
 # Global tuning function
 # ======================
-def tune_freds_generic(
+def tune_freds(
     sensitivity_pairs,
     n_groups_list,
     seeds,
@@ -158,7 +158,7 @@ if __name__ == "__main__":
     groups_to_test = [33, 40, 72]
     seeds = [1, 42, 123]
 
-    tune_freds_generic(
+    tune_freds(
         sensitivity_pairs=sensitivity_pairs,
         n_groups_list=groups_to_test, #pool of maximm number of groups to be tested
         seeds=seeds, #pool of seed to test
@@ -166,3 +166,4 @@ if __name__ == "__main__":
         criteria='GPT',
         n_processes=2 #Cores available in your machine for the task
     )
+
