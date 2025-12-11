@@ -23,5 +23,10 @@ The algorithm performs Multi-objective Optimization (MOO), learning the Pareto f
 For single-objective problems, i.e., minimizing the dissimilarity between a fine and a coarser grid, the in-house GA is employed by default. For two objective functions, FREDS uses the powerful NSGA-II implemented in `pymoo`. For three or more fitness functions, FREDS defaults to the NSGA-III algorithm implemented in `pymoo`. However, users are free to customize the algorithm and its parameters in any case by calling a different algorithm from the `pymoo` suite. In principle, more than three objective functions can be added to the context. However, the developers cannot guarantee satisfactory results for problems with more than three objective functions. In any case, FREDS will yield a collection of convergence and performance metrics to assess a particular run.
 
 ## Usage
-To get started with FREDS, you can use the `test.ipynb` notebook provided in the repository. This notebook will guide you through the functionalities of the software, demonstrating how to set up and run sensitivity calculations and optimizations.
+To get started with FREDS, you can use the `test.ipynb` notebook provided in the repository. This notebook will guide you through the functionalities of the software, demonstrating how to set up and run energy grid optimizations for sensitivity calculations.
+
+
+## Parameter tuning
+We have tuned FREDS for running with an acceptable performance across thermal and fast systems for archetypical use cases. However, you may be interested in specifically tuning FREDS for a scenario you may require extra performance, in that case, you can relaunch the parameter tuning routine for a specific problem you may do so by checking the last section of the 'test.ipynb' , however for running it you will need to install Optuna:
+- 'Optuna' version 4.3.0
 
