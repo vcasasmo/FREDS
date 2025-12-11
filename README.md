@@ -6,6 +6,7 @@ This code was jointly developed by researchers of Belgian Nuclear Research Centr
 - `pandas` version 1.3.2
 - `iracepy` version 0.0.1 (with R 4.4.0 installed)
 - `pymoo` version 0.6.1.3
+- `seaborn` version 0.13.2
 
 ## Abstract
 
@@ -31,5 +32,6 @@ We have tuned FREDS to achieve solid performance across both thermal and fast sy
 
 To do so, refer to the last section of `test.ipynb`, where an example tuning workflow is provided.
 Note that running this routine requires installing `Optuna` (version 4.3.0).
+
 
 
