@@ -27,6 +27,9 @@ To get started with FREDS, you can use the `test.ipynb` notebook provided in the
 
 
 ## Parameter tuning
-We have tuned FREDS for running with an acceptable performance across thermal and fast systems for archetypical use cases. However, you may be interested in specifically tuning FREDS for a scenario you may require extra performance, in that case, you can relaunch the parameter tuning routine for a specific problem you may do so by checking the last section of the 'test.ipynb' , however for running it you will need to install Optuna:
-- 'Optuna' version 4.3.0
+We have tuned FREDS to achieve solid performance across both thermal and fast systems for typical use cases. However, if you need to further optimize FREDS for a specific scenario requiring additional performance, you can re-run the parameter tuning routine.
+
+To do so, refer to the last section of `test.ipynb`, where an example tuning workflow is provided.
+Note that running this routine requires installing `Optuna` (version 4.3.0).
+
 
