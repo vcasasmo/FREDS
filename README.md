@@ -1,4 +1,4 @@
-![My Logo](FREDS_logo.png)
+![My Logo](FREDS_logo_s.png)
 # Fit Reactor Energy Discretization Search (FREDS)
 This code was jointly developed by researchers of Belgian Nuclear Research Centre (SCK CEN), ULB and UGent based on the early implementation developed by [Emilie3008](https://github.com/Emilie3008) and available at  https://github.com/Emilie3008/MScThesis_2023_2024. using Python version 3.12.0, as well as the following libraries and their versions:
 - `numpy` version 1.26.4
@@ -32,6 +32,7 @@ We have tuned FREDS to achieve solid performance across both thermal and fast sy
 
 To do so, refer to the last section of `test.ipynb`, where an example tuning workflow is provided.
 Note that running this routine requires installing `Optuna` (version 4.3.0).
+
 
 
 
